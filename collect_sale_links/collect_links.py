@@ -7,49 +7,51 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from settings import BASE_DIRECTORY, extract_domain
 from difflib import SequenceMatcher
-from urllib.parse import urlparse
 from collections import defaultdict
+
 
 default_num_results = 100
 
-def perform_google_search(query, num_results=default_num_results):
+
+def perform_google_search(item_name, num=default_num_results):
+    query = f'shop {item_name}'
+
     urls = []
-    for url in search(query, num_results=num_results):
-        urls.append(url)
+    for url in search(query, num=num):
+        if url.startswith('https') and not \
+            any(exclude in url for exclude in \
+                ['youtube', 'amazon', 'google', 'ebay', 'wiki']):
+            urls.append(url)
     return urls
 
-def collect_links(item_name):
+
+def filter_links(url_list, item_name):
     def url_in_competitors(url):
-        file_path = os.path.join(BASE_DIRECTORY, 'collect_competitors', 'competitors_list.txt')
-        with open(file_path, 'r') as f:
-            competitors_list = f.read().splitlines()
-        # print(f'Competitors list: {competitors_list}')
         domain = extract_domain(url)
-        print(f'Extracted domain: {domain}')
         return domain in competitors_list
 
-    if not isinstance(item_name, list):
-        item_name = [item_name]
+    file_path = os.path.join(BASE_DIRECTORY, 'collect_competitors', 
+                             'competitors_list.txt')
+    with open(file_path, 'r') as f:
+        competitors_list = f.read().splitlines()
 
-    url_list = []
-    for item in item_name:
-        urls = perform_google_search(f'shop {item}')
-        print(f'Search results for "{item}": {urls}')
-        for url in urls:
-            if url_in_competitors(url):
-                url_list.append(url)
-                print(f'Found competitor: {url}')
+    filtered_url_list = []
+    for url in url_list:
+        if url_in_competitors(url):
+            filtered_url_list.append(url)
 
-    if url_list:
-        url_list = get_best_matches(item_name, url_list)
+    if filtered_url_list:
+        filtered_url_list = get_best_matches(item_name, filtered_url_list)
+    else:
+        print('No URLs found in competitors list.')
 
-    return url_list
+    return filtered_url_list
 
 
 def group_urls_by_domain(urls):
     grouped_urls = defaultdict(list)
     for url in urls:
-        domain = urlparse(url).netloc
+        domain = extract_domain(url)
         grouped_urls[domain].append(url)
     return grouped_urls
 

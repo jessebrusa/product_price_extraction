@@ -1,11 +1,13 @@
 import os 
-import re
+from urllib.parse import urlparse
 
 
 BASE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 def extract_domain(url):
-    match = re.search(r'https?://([^/]+)', url)
-    if match:
-        return match.group(1)
-    return None
+    parsed_url = urlparse(url)
+    domain = parsed_url.netloc
+    parts = domain.split('.')
+    if parts[0] == 'www':
+        parts = parts[1:]
+    return '.'.join(parts) if domain else None
