@@ -2,6 +2,10 @@ from playwright.sync_api import sync_playwright
 from urllib.parse import urlparse
 
 
+unwanted_domains = ['youtube', 'amazon', 'google', 'ebay', 'wiki', 'facebook', 
+                    'twitter', 'instagram', 'pinterest', 'linkedin', 'reddit']
+
+
 def read_product_list(file_path):
     with open(file_path, 'r') as f:
         return f.read().splitlines()
@@ -20,8 +24,7 @@ def collect_competitor_links(product_list):
                 if count >= 50:
                     break
                 href = link.get_attribute('href')
-                if href and 'google' not in href and 'amazon' not in href and 'ebay' \
-                                                not in href and 'youtube' not in href:
+                if href and not any(domain in href for domain in unwanted_domains):
                     domain = urlparse(href).netloc
                     if domain and domain not in competitors:
                         competitors.add(domain)
@@ -76,10 +79,28 @@ def test_links():
             f.write(f'{competitor}\n')
 
 
+
+def clean_competitors():
+    with open('./competitors_list.txt', 'r') as f:
+        competitors_list = f.read().splitlines()
+
+    filtered_competitors = []
+
+    for competitor in competitors_list:
+        if not any(domain in competitor for domain in unwanted_domains):
+            filtered_competitors.append(competitor)
+
+    with open('./competitors_list.txt', 'w') as f:
+        for competitor in filtered_competitors:
+            f.write(f'{competitor}\n')
+
+
 def main():
-    product_list = read_product_list('./product_list.txt')
-    competitors = collect_competitor_links(product_list)
-    write_competitors_to_file(competitors, 'competitors_list.txt')
+    item_name = 'BOSS StrongBox 7126-7640 - Pull Out Drawer'
+    competitors = collect_competitor_links([item_name])
+    write_competitors_to_file(competitors, './competitors_list.txt')
+    order_competitors()
+    clean_competitors()
 
 
 if __name__ == "__main__":

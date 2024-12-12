@@ -87,9 +87,6 @@ def get_best_match(item_name, urls):
 
 
 if __name__ == "__main__":
-    item_name = "example_item"  # Replace with your actual item name
-    competitor_link_list = collect_links(item_name)
-    if not competitor_link_list:
-        print("No competitors found")
-    else:
-        print(f"Competitor links: {competitor_link_list}")
+    item_name = 'Armasight BNVD-51 Gen 3 Pinnacle Night Vision Goggle'
+    urls = perform_google_search(item_name)
+    filtered_urls = filter_links(urls, item_name)

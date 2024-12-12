@@ -1,8 +1,9 @@
 from collect_sale_links.collect_links import perform_google_search, filter_links
 
 
-item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
+# item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
 # item_name = 'Armasight BNVD-51 Gen 3 Pinnacle Night Vision Goggle'
+item_name = 'BOSS StrongBox 7126-7640 - Pull Out Drawer'
 
 
 def main():
