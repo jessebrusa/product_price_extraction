@@ -8,19 +8,21 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import BASE_DIRECTORY, extract_domain
 from difflib import SequenceMatcher
 from collections import defaultdict
+from urllib.parse import urlparse
 
 
 default_num_results = 100
 
 
-def perform_google_search(item_name, num=default_num_results):
+def perform_google_search(item_name, num_results=default_num_results):
     query = f'shop {item_name}'
 
     urls = []
-    for url in search(query, num=num):
+    for url in search(query, num_results=num_results):
         if url.startswith('https') and not \
             any(exclude in url for exclude in \
-                ['youtube', 'amazon', 'google', 'ebay', 'wiki']):
+                ['youtube', 'amazon', 'google', 'ebay', 'wiki', 'facebook', 
+                 'twitter', 'instagram', 'pinterest', 'linkedin', 'reddit']):
             urls.append(url)
     return urls
 
@@ -69,7 +71,9 @@ def get_best_matches(item_name, urls):
 
 def get_best_match(item_name, urls):
     def match_ratio(item, url):
-        return SequenceMatcher(None, item, url).ratio()
+        parsed_url = urlparse(url)
+        path = parsed_url.path
+        return SequenceMatcher(None, item, path).ratio()
 
     best_match = None
     highest_ratio = 0
