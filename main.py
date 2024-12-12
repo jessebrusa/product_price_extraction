@@ -9,9 +9,9 @@ item_name = 'Renogy 1.2kW Essential Kit'
 
 
 def main():
-    skip_unfiltered = True
+    skip_unfiltered = False
     if not skip_unfiltered:
-        unfiltered_link_list = perform_google_search(item_name, 50)
+        unfiltered_link_list = perform_google_search(item_name, 100)
         if not unfiltered_link_list:
             print(f'No search results found for "{item_name}"')
             return
@@ -22,7 +22,7 @@ def main():
         with open('printout_data/unfiltered_links.txt', 'r') as file:
             unfiltered_link_list = file.readlines()
 
-    skip_competitor = True
+    skip_competitor = False
     if not skip_competitor:
         competitor_link_list = filter_links(unfiltered_link_list, item_name)
         if not competitor_link_list:

@@ -5,7 +5,6 @@ import os
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')   
 GOOGLE_CSE_ID = os.environ.get('GOOGLE_CSE_ID')
 
-
 def extract_domain(url):
     parsed_url = urlparse(url)
     domain = parsed_url.netloc
@@ -33,7 +32,9 @@ def perform_google_search(item_name, num_results):
             if link.startswith('https') and not \
                 any(exclude in link for exclude in \
                     ['youtube', 'amazon', 'google', 'ebay', 'wiki', 'facebook', 
-                     'twitter', 'instagram', 'pinterest', 'linkedin', 'reddit']):
+                     'twitter', 'instagram', 'pinterest', 'linkedin', 'reddit',
+                     'ironclad', 'blog', 'forum', 'review', 'collection', 'tiktok',
+                     'quora']):
                 urls.append(link)
 
     return urls
