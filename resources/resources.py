@@ -1,5 +1,4 @@
 from urllib.parse import urlparse
-from googlesearch import search
 import requests
 import os
 
@@ -22,7 +21,7 @@ def perform_google_search(item_name, num_results):
     query = f'shop {item_name}'
     urls = []
 
-    for start in range(1, num_results + 1, 10):  # Google API returns 10 results per request
+    for start in range(1, num_results + 1, 10): 
         url = f'https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={cse_id}&start={start}'
         response = requests.get(url)
         results = response.json()

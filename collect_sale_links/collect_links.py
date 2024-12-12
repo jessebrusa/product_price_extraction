@@ -25,11 +25,14 @@ def filter_links(url_list, item_name):
     with open(file_path, 'r') as f:
         competitors_list = f.read().splitlines()
 
-    # filtered_url_list = []
-    # for url in url_list:
-    #     if url_in_competitors(url):
-    #         filtered_url_list.append(url)
-    filtered_url_list = url_list
+    competitor_check = False
+    if competitor_check:
+        filtered_url_list = []
+        for url in url_list:
+            if url_in_competitors(url):
+                filtered_url_list.append(url)
+    else:
+        filtered_url_list = url_list
 
     if filtered_url_list:
         filtered_url_list = get_best_matches(item_name, filtered_url_list)
