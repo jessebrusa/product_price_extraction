@@ -5,26 +5,14 @@ import sys
 # Add the main directory to the PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from settings import BASE_DIRECTORY, extract_domain
+from settings import BASE_DIRECTORY
+from resources.resources import perform_google_search, extract_domain
 from difflib import SequenceMatcher
 from collections import defaultdict
 from urllib.parse import urlparse
 
 
 default_num_results = 100
-
-
-def perform_google_search(item_name, num_results=default_num_results):
-    query = f'shop {item_name}'
-
-    urls = []
-    for url in search(query, num_results=num_results):
-        if url.startswith('https') and not \
-            any(exclude in url for exclude in \
-                ['youtube', 'amazon', 'google', 'ebay', 'wiki', 'facebook', 
-                 'twitter', 'instagram', 'pinterest', 'linkedin', 'reddit']):
-            urls.append(url)
-    return urls
 
 
 def filter_links(url_list, item_name):
@@ -37,10 +25,11 @@ def filter_links(url_list, item_name):
     with open(file_path, 'r') as f:
         competitors_list = f.read().splitlines()
 
-    filtered_url_list = []
-    for url in url_list:
-        if url_in_competitors(url):
-            filtered_url_list.append(url)
+    # filtered_url_list = []
+    # for url in url_list:
+    #     if url_in_competitors(url):
+    #         filtered_url_list.append(url)
+    filtered_url_list = url_list
 
     if filtered_url_list:
         filtered_url_list = get_best_matches(item_name, filtered_url_list)

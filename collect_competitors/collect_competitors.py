@@ -1,9 +1,16 @@
+import os
+import sys
+
+# Add the main directory to the PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from resources.resources import perform_google_search
 from playwright.sync_api import sync_playwright
 from urllib.parse import urlparse
 
 
 unwanted_domains = ['youtube', 'amazon', 'google', 'ebay', 'wiki', 'facebook', 
-                    'twitter', 'instagram', 'pinterest', 'linkedin', 'reddit']
+                    'twitter', 'instagram', 'pinterest', 'linkedin', 'reddit',
+                    'ironclad']
 
 
 def read_product_list(file_path):
@@ -13,23 +20,17 @@ def read_product_list(file_path):
 
 def collect_competitor_links(product_list):
     competitors = set()
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        page = browser.new_page()
-        for product in product_list:
-            page.goto(f'https://www.google.com/search?q={product}')
-            links = page.query_selector_all('a')
-            count = 0
-            for link in links:
-                if count >= 50:
-                    break
-                href = link.get_attribute('href')
-                if href and not any(domain in href for domain in unwanted_domains):
-                    domain = urlparse(href).netloc
-                    if domain and domain not in competitors:
-                        competitors.add(domain)
-                        count += 1
-        browser.close()
+    for product in product_list:
+        urls = perform_google_search(product)
+        count = 0
+        for url in urls:
+            if count >= 50:
+                break
+            if not any(domain in url for domain in unwanted_domains):
+                domain = urlparse(url).netloc
+                if domain and domain not in competitors:
+                    competitors.add(domain)
+                    count += 1
     return competitors
 
 
@@ -46,14 +47,17 @@ def order_competitors():
         print('No competitors found')
         return
 
+    # Remove 'www.' prefix and duplicates
+    competitors_set = set()
     for competitor in competitors_list:
         if 'www.' in competitor:
-            competitors_list[competitors_list.index(competitor)] = competitor[4:]
+            competitor = competitor[4:]
+        competitors_set.add(competitor)
 
-    competitors_list.sort()
+    sorted_competitors_list = sorted(competitors_set)
 
     with open('./competitors_list.txt', 'w') as f:
-        for competitor in competitors_list:
+        for competitor in sorted_competitors_list:
             f.write(f'{competitor}\n')
 
 
@@ -79,25 +83,25 @@ def test_links():
             f.write(f'{competitor}\n')
 
 
-
 def clean_competitors():
     with open('./competitors_list.txt', 'r') as f:
         competitors_list = f.read().splitlines()
 
-    filtered_competitors = []
+    filtered_competitors = set()
 
     for competitor in competitors_list:
         if not any(domain in competitor for domain in unwanted_domains):
-            filtered_competitors.append(competitor)
+            filtered_competitors.add(competitor)
 
     with open('./competitors_list.txt', 'w') as f:
-        for competitor in filtered_competitors:
+        for competitor in sorted(filtered_competitors):
             f.write(f'{competitor}\n')
 
 
 def main():
-    item_name = 'BOSS StrongBox 7126-7640 - Pull Out Drawer'
+    item_name = 'Renogy 1.2kW Essential Kit'
     competitors = collect_competitor_links([item_name])
+    print(competitors)
     write_competitors_to_file(competitors, './competitors_list.txt')
     order_competitors()
     clean_competitors()
