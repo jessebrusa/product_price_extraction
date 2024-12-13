@@ -57,11 +57,10 @@ def get_best_matches(item_name, urls):
         best_match = get_best_match(item_name, domain_urls)
         if best_match:
             best_matches.append(best_match)
-        print(f'{domain}: {best_match}')
     return best_matches
     
 
-def get_best_match(item_name, urls):
+def get_best_match(item_name, urls, threshold=0.45):
     def match_ratio(item, url):
         parsed_url = urlparse(url)
         path = parsed_url.path
@@ -71,6 +70,8 @@ def get_best_match(item_name, urls):
     highest_ratio = 0
     for url in urls:
         ratio = match_ratio(item_name, url)
+        if ratio < threshold:
+            continue
         if ratio > highest_ratio:
             highest_ratio = ratio
             best_match = url

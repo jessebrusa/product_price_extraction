@@ -7,16 +7,21 @@ def filter_out_category(page):
 
 
 def filter_out_blog(page):
-    blog_indicators = ['article', 'publisher', 'author']
+    # Check for the presence of elements that are more unique to blogs
+    blog_indicators = [
+        '.author',
+    ]
+
     for indicator in blog_indicators:
-        if indicator in page.content():
+        if page.query_selector(indicator):
             return True
+
     return False
 
 
 def filter_for_product_page(page):
     if filter_out_category(page):
         return False
-    # if filter_out_blog(page):
-    #     return False
+    if filter_out_blog(page):
+        return False
     return True

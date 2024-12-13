@@ -2,12 +2,15 @@ from collect_sale_links.collect_links import perform_google_search, filter_links
 from extract_price.extract_price import extract_price 
 
 
-# item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
-# item_name = 'Armasight BNVD-51 Gen 3 Pinnacle Night Vision Goggle'
+item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
+item_name = 'Armasight BNVD-51 Gen 3 Pinnacle Night Vision Goggle'
 # item_name = 'BOSS StrongBox 7126-7640 - Pull Out Drawer'
-item_name = 'Renogy 1.2kW Essential Kit'
+# item_name = 'Renogy 1.2kW Essential Kit'
 
 
+skip_unfiltered = False
+skip_competitor = False
+skip_extract_price = False
 def main():
     skip_unfiltered = False
     if not skip_unfiltered:
@@ -47,7 +50,6 @@ def main():
     else:
         with open('printout_data/prices.txt', 'r') as file:
             price_dict = file.readlines()
-            print(price_dict)
 
 
     

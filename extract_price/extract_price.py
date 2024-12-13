@@ -1,5 +1,6 @@
 from playwright.sync_api import sync_playwright
 from extract_price.filter_for_product_page import filter_for_product_page
+from extract_price.target_price import get_product_price
 
 def extract_price(url_list):
     with sync_playwright() as p:
@@ -10,16 +11,15 @@ def extract_price(url_list):
         for url in url_list:
             page.goto(url) 
             product_page = filter_for_product_page(page)
-            if product_page:
-                print(f'product page found')
-                price_dict[url] = 'price'
+            if not product_page:
                 continue
-            print(f'Not a product page')
+            extracted_price = get_product_price(page)
+            if extracted_price is None:
+                continue
+            price_dict[url] = extracted_price
+
 
         browser.close()
 
     return price_dict
 
-# Example usage
-if __name__ == "__main__":
-    extract_price("https://example.com")
