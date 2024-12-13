@@ -60,7 +60,7 @@ def get_best_matches(item_name, urls):
     return best_matches
     
 
-def get_best_match(item_name, urls, threshold=0.45):
+def get_best_match(item_name, urls, threshold=0.25):
     def match_ratio(item, url):
         parsed_url = urlparse(url)
         path = parsed_url.path

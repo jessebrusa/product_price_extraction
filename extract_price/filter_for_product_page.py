@@ -1,27 +1,28 @@
-def filter_out_category(page):
+from playwright.async_api import Page
+
+async def filter_out_category(page: Page) -> bool:
     categories = ['best sellers', 'low to high', 'high to low']
+    content = await page.content()
     for category in categories:
-        if category in page.content():
+        if category in content:
             return True
     return False
 
-
-def filter_out_blog(page):
+async def filter_out_blog(page: Page) -> bool:
     # Check for the presence of elements that are more unique to blogs
     blog_indicators = [
         '.author',
     ]
 
     for indicator in blog_indicators:
-        if page.query_selector(indicator):
+        if await page.query_selector(indicator):
             return True
 
     return False
 
-
-def filter_for_product_page(page):
-    if filter_out_category(page):
+async def filter_for_product_page(page: Page) -> bool:
+    if await filter_out_category(page):
         return False
-    if filter_out_blog(page):
+    if await filter_out_blog(page):
         return False
     return True

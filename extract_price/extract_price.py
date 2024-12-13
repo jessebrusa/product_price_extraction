@@ -1,25 +1,35 @@
-from playwright.sync_api import sync_playwright
-from extract_price.filter_for_product_page import filter_for_product_page
-from extract_price.target_price import get_product_price
+from playwright.async_api import async_playwright
+from extract_price.filter_for_product_page import filter_for_product_page   
+from extract_price.target_price import target_price
 
-def extract_price(url_list):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        page = browser.new_page()
+async def extract_price(url_list):
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)
+        page = await browser.new_page()
 
         price_dict = {}
         for url in url_list:
-            page.goto(url) 
-            product_page = filter_for_product_page(page)
+            try:
+                await page.goto(url)
+                # Check if "This site can't be reached" is present in the page content
+                if "This site can't be reached" in await page.content():
+                    print(f"Site can't be reached: {url}")
+                    continue
+            except Exception as e:
+                if "Protocol error (Page.navigate): Cannot navigate to invalid URL" in str(e):
+                    continue
+                print(f"Failed to load {url}: {e}")
+                continue
+
+            product_page = await filter_for_product_page(page)
             if not product_page:
                 continue
-            extracted_price = get_product_price(page)
+
+            extracted_price = await target_price(page)
             if extracted_price is None:
                 continue
             price_dict[url] = extracted_price
 
-
-        browser.close()
+        await browser.close()
 
     return price_dict
-

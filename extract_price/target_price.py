@@ -1,86 +1,144 @@
-from playwright.sync_api import Page
-from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright, Page
+from bs4 import BeautifulSoup, NavigableString
 import re
 
-def prioritize_price_tags(html):
-    soup = BeautifulSoup(html, 'html.parser')
-    price_elements = []
-
-    # Extract relevant tags
-    for tag in soup.find_all(['p', 'div', 'span', 'strong', 's', 'small', 'mark', 'data']):
-        text = tag.get_text()
-        # Filter by money symbols and exclude certain keywords and phone numbers
-        if re.search(r'[\$\€\£]', text) and not re.search(r'(shipping|order|total|save|discount|off|tel:|list price|starting at)', text, re.IGNORECASE):
-            # Exclude elements with specific classes or IDs
-            if not tag.find_parent(class_='save-amount-wrap'):
-                # Exclude elements with "List" or "list" in the same span or right before
-                if not (tag.find_previous_sibling(text=re.compile(r'list', re.IGNORECASE)) or re.search(r'list', text, re.IGNORECASE)):
-                    price_elements.append(tag)
-
-    return price_elements
-
-def prioritize_prices(price_elements):
-    prioritized_prices = []
-
-    for element in price_elements:
-        text = element.get_text()
-        # Check for contextual clues
-        if re.search(r'(current|sale|discount|now)\s*price', text, re.IGNORECASE):
-            prioritized_prices.append(element)
-        # Prioritize elements with specific classes or IDs
-        elif 'price__current' in element.get('class', []):
-            prioritized_prices.append(element)
-        # Prioritize elements wrapped in <ins> tags
-        elif element.find('ins'):
-            prioritized_prices.append(element.find('ins'))
-        # Prioritize elements with data-price or data-value attribute
-        elif element.has_attr('data-price') or element.has_attr('data-value'):
-            prioritized_prices.append(element)
-        # Prioritize elements with data-price-amount attribute and data-price-type="finalPrice"
-        elif element.has_attr('data-price-amount') and element.get('data-price-type') == 'finalPrice':
-            prioritized_prices.append(element)
-        # Prioritize elements with complex price structures
-        elif element.find('sup') and element.find('span'):
-            prioritized_prices.append(element)
-        # Prioritize elements with aria-label attribute containing price
-        elif element.has_attr('aria-label') and re.search(r'[\$\€\£]', element['aria-label']):
-            prioritized_prices.append(element)
-
-    # If no prioritized prices found, return all price elements
-    if not prioritized_prices:
-        return price_elements
-
-    return prioritized_prices
-
-def clean_price(price_text):
-    # Extract the numeric part of the price
-    match = re.search(r'[\d,]+(?:\.\d{2})?', price_text)
-    if match:
-        price_cleaned = match.group(0).replace(',', '')
-        try:
-            return round(float(price_cleaned), 2)
-        except ValueError:
-            return None
+def find_price_element(element):
+    while element:
+        if "$" in element.get_text():
+            return element
+        element = element.parent
     return None
 
-def get_product_price(page: Page) -> float:
-    html_content = page.content()
-    price_elements = prioritize_price_tags(html_content)
-    prioritized_prices = prioritize_prices(price_elements)
-
-    for element in prioritized_prices:
-        if element.find('sup') and element.find('span'):
-            price_text = ''.join([e.get_text() for e in element.find_all(['sup', 'span'])])
-        else:
-            price_text = element.get_text().strip()
-        
-        if "List" in price_text:
-            continue
-        
+async def find_add_to_cart(page: Page):
+    # Wait for the page to load partially by waiting for any element
+    await page.wait_for_selector("body", timeout=10000)
+    
+    # Get the page content
+    content = await page.content()
+    
+    # Parse the content with BeautifulSoup
+    soup = BeautifulSoup(content, 'html.parser')
+    
+    # Remove script and style tags
+    for script in soup(["script", "style", "template"]):
+        script.decompose()
+    
+    # Check if "discontinued" is present in the page content
+    if soup.find(string=lambda text: isinstance(text, NavigableString) and "discontinued" in text.lower()):
+        print("Product is discontinued")
         print(page.url)
-        print(f"Extracted price text: {price_text}")  # Add this line to log the price text
-        price = clean_price(price_text)
-        if price is not None:
-            return price
+        return None
+    
+    # Find the first element containing "Add to Cart" or "Sold out" text
+    element = soup.find(string=lambda text: isinstance(text, NavigableString) and ("add to cart" in text.lower() or "sold out" in text.lower()))
+    
+    if element:
+        if "sold out" in element.lower():
+            print(f"Found element with text: {element}")
+            print(page.url)
+            print(element.parent)
+            print()
+        return element.parent
+    else:
+        # If not found by text, search for input elements with value attribute
+        element = soup.find("input", {"value": lambda value: value and "add to cart" in value.lower()})
+        if element:
+            print(f"Found input element with value: {element}")
+            return element.parent
+        else:
+            # Search for button elements with "Add To Cart" or "Sold out" text
+            element = soup.find("button", string=lambda text: isinstance(text, NavigableString) and ("add to cart" in text.lower() or "sold out" in text.lower()))
+            if element:
+                if "sold out" in element.lower():
+                    print(f"Found button element with text: {element}")
+                    print(page.url)
+                return element
+            else:
+                # Search for span elements with "Add To Cart" text within buttons
+                element = soup.find("button span", string=lambda text: isinstance(text, NavigableString) and "add to cart" in text.lower())
+                if element:
+                    print(f"Found span element with text: {element}")
+                    return element.parent
+                else:
+                    return None
 
+def extract_price(element):
+    # First, try to find the price within the <div class="price--main"> tag
+    main_price_element = element.find('div', class_='price--main')
+    if main_price_element:
+        text = main_price_element.get_text()
+        match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+        if match:
+            return match.group()
+    
+    # If no <div class="price--main"> tag is found, try to find the price within the <div class="price__current"> tag
+    current_price_element = element.find('div', class_='price__current')
+    if current_price_element:
+        text = current_price_element.get_text()
+        match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+        if match:
+            return match.group()
+    
+    # If no specific price tags are found, try to find the price within the <span class="Details_actual-price"> tag
+    actual_price_element = element.find('span', class_='Details_actual-price')
+    if actual_price_element:
+        text = actual_price_element.get_text()
+        match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+        if match:
+            return match.group()
+    
+    # If no specific price tags are found, fall back to the original method
+    text = element.get_text()
+    match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+    if match:
+        return match.group()
+    
     return None
+
+def clean_price(price):
+    cleaned_price = re.sub(r'[^\d.]', '', price)
+    cleaned_price = float(cleaned_price) if cleaned_price else None
+    if cleaned_price == 0:
+        return None
+    return cleaned_price
+
+async def target_price(page: Page):
+    # Step 1: Find the "Add to Cart" or "Sold Out" button
+    add_to_cart_element = await find_add_to_cart(page)
+    if not add_to_cart_element:
+        print("Add to cart element not found")
+        print(page.url)
+        print()
+        return None
+    
+    # print()
+    # print(page.url)
+    # print(add_to_cart_element)
+    # print()
+
+    # Step 2: Find the price element
+    price_element = find_price_element(add_to_cart_element)
+    if not price_element:
+        print("Price element not found")
+        print(page.url)
+        print()
+        return None
+    
+    # print()
+    # print(page.url)
+    # print(price_element)
+    # print()
+    
+    # Step 3: Extract the price
+    price = extract_price(price_element)
+    if not price:
+        print("Price not found")
+        print(page.url)
+        print()
+        return None
+
+    # Step 4: Clean the extracted price
+    cleaned_price = clean_price(price)
+
+
+    return cleaned_price

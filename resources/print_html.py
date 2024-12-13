@@ -12,7 +12,7 @@ async def download_html(url: str, output_file: str):
         await browser.close()
 
 def save_html(url: str):
-    output_file = 'downloaded_page.html'
+    output_file = './printout_data/downloaded_page.html'
     asyncio.run(download_html(url, output_file))
 
 # Example usage
