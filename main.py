@@ -3,14 +3,16 @@ from collect_sale_links.collect_links import perform_google_search, filter_links
 from extract_price.extract_price import extract_price 
 
 
-item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
+# item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
 # item_name = 'Armasight BNVD-51 Gen 3 Pinnacle Night Vision Goggle'
 # item_name = 'BOSS StrongBox 7126-7640 - Pull Out Drawer'
 # item_name = 'Renogy 1.2kW Essential Kit'
+item_name = 'ATN BinoX 4T 384 1.25-5x Thermal Binoculars'
 
 
-skip_unfiltered = False
-skip_competitor = False
+
+skip_unfiltered = True
+skip_competitor = True
 skip_extract_price = False
 def main():
     if not skip_unfiltered:

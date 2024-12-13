@@ -3,12 +3,13 @@ from bs4 import BeautifulSoup, NavigableString
 import re
 
 def find_price_element(element):
+    currency_symbols = ["$", "€", "£", "¥", "₹", "₽", "₩", "₪", "₫", "฿", "₴", "₦"]
     while element:
-        if "$" in element.get_text():
+        text = element.get_text()
+        if any(symbol in text for symbol in currency_symbols):
             return element
         element = element.parent
     return None
-
 async def find_add_to_cart(page: Page):
     # Wait for the page to load partially by waiting for any element
     await page.wait_for_selector("body", timeout=10000)
