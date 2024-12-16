@@ -68,31 +68,44 @@ def extract_price(element):
     main_price_element = element.find('div', class_='price--main')
     if main_price_element:
         text = main_price_element.get_text()
-        match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
-        if match:
-            return match.group()
+        if "value" not in text.lower():
+            match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+            if match:
+                return match.group()
     
     # If no <div class="price--main"> tag is found, try to find the price within the <div class="price__current"> tag
     current_price_element = element.find('div', class_='price__current')
     if current_price_element:
         text = current_price_element.get_text()
-        match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
-        if match:
-            return match.group()
+        if "value" not in text.lower():
+            match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+            if match:
+                return match.group()
     
     # If no specific price tags are found, try to find the price within the <span class="Details_actual-price"> tag
     actual_price_element = element.find('span', class_='Details_actual-price')
     if actual_price_element:
         text = actual_price_element.get_text()
-        match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
-        if match:
-            return match.group()
+        if "value" not in text.lower():
+            match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+            if match:
+                return match.group()
+    
+    # If no specific price tags are found, try to find the price within the <div class="price sale-price"> tag
+    sale_price_element = element.find('div', class_='price sale-price')
+    if sale_price_element:
+        text = sale_price_element.get_text()
+        if "value" not in text.lower():
+            match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+            if match:
+                return match.group()
     
     # If no specific price tags are found, fall back to the original method
     text = element.get_text()
-    match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
-    if match:
-        return match.group()
+    if "value" not in text.lower():
+        match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+        if match:
+            return match.group()
     
     return None
 

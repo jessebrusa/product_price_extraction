@@ -32,4 +32,7 @@ async def extract_price(url_list):
 
         await browser.close()
 
-    return price_dict
+    # Sort the dictionary by value (price)
+    sorted_price_dict = dict(sorted(price_dict.items(), key=lambda item: item[1]))
+
+    return sorted_price_dict
