@@ -7,6 +7,8 @@ async def extract_price(url_list):
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
 
+        # url_list = ['https://www.opticsplanet.com/armasight-collector-320-1-5-6x19mm-thermal-mini-weapon-sight.html']
+
         price_dict = {}
         for url in url_list:
             try:

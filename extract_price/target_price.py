@@ -2,6 +2,14 @@ from playwright.async_api import async_playwright, Page
 from bs4 import BeautifulSoup, NavigableString
 import re
 
+
+def has_msrp_around(element):
+        text = element.get_text()
+        if "msrp" in text.lower():
+            return True
+        return False
+
+
 def find_price_element(element):
     currency_symbols = ["$", "€", "£", "¥", "₹", "₽", "₩", "₪", "₫", "฿", "₴", "₦"]
     while element:
@@ -10,6 +18,8 @@ def find_price_element(element):
             return element
         element = element.parent
     return None
+
+
 async def find_add_to_cart(page: Page):
     # Wait for the page to load partially by waiting for any element
     await page.wait_for_selector("body", timeout=10000)
@@ -63,10 +73,11 @@ async def find_add_to_cart(page: Page):
                 else:
                     return None
 
+
 def extract_price(element):
     # First, try to find the price within the <div class="price--main"> tag
     main_price_element = element.find('div', class_='price--main')
-    if main_price_element:
+    if main_price_element and not has_msrp_around(main_price_element):
         text = main_price_element.get_text()
         if "value" not in text.lower():
             match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
@@ -75,7 +86,7 @@ def extract_price(element):
     
     # If no <div class="price--main"> tag is found, try to find the price within the <div class="price__current"> tag
     current_price_element = element.find('div', class_='price__current')
-    if current_price_element:
+    if current_price_element and not has_msrp_around(current_price_element):
         text = current_price_element.get_text()
         if "value" not in text.lower():
             match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
@@ -84,7 +95,7 @@ def extract_price(element):
     
     # If no specific price tags are found, try to find the price within the <span class="Details_actual-price"> tag
     actual_price_element = element.find('span', class_='Details_actual-price')
-    if actual_price_element:
+    if actual_price_element and not has_msrp_around(actual_price_element):
         text = actual_price_element.get_text()
         if "value" not in text.lower():
             match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
@@ -93,7 +104,7 @@ def extract_price(element):
     
     # If no specific price tags are found, try to find the price within the <div class="price sale-price"> tag
     sale_price_element = element.find('div', class_='price sale-price')
-    if sale_price_element:
+    if sale_price_element and not has_msrp_around(sale_price_element):
         text = sale_price_element.get_text()
         if "value" not in text.lower():
             match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
@@ -102,12 +113,13 @@ def extract_price(element):
     
     # If no specific price tags are found, fall back to the original method
     text = element.get_text()
-    if "value" not in text.lower():
+    if "value" not in text.lower() and "msrp" not in text.lower():
         match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
         if match:
             return match.group()
     
     return None
+
 
 def clean_price(price):
     cleaned_price = re.sub(r'[^\d.]', '', price)
@@ -115,6 +127,7 @@ def clean_price(price):
     if cleaned_price == 0:
         return None
     return cleaned_price
+
 
 async def target_price(page: Page):
     # Step 1: Find the "Add to Cart" or "Sold Out" button
