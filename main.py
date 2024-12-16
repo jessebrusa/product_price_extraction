@@ -1,19 +1,22 @@
 import asyncio
 from collect_sale_links.collect_links import perform_google_search, filter_links
 from extract_price.extract_price import extract_price 
+from remove_outliers.remove_outliers import remove_outliers
+import json
 
 
-# item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
+item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
 # item_name = 'Armasight BNVD-51 Gen 3 Pinnacle Night Vision Goggle'
 # item_name = 'BOSS StrongBox 7126-7640 - Pull Out Drawer'
-# item_name = 'Renogy 1.2kW Essential Kit'
-item_name = 'ATN BinoX 4T 384 1.25-5x Thermal Binoculars'
+# # item_name = 'Renogy 1.2kW Essential Kit'
+# item_name = 'ATN BinoX 4T 384 1.25-5x Thermal Binoculars'
 
 
 
 skip_unfiltered = True
 skip_competitor = True
-skip_extract_price = False
+skip_extract_price = True
+skip_remove_outliers = False  
 def main():
     if not skip_unfiltered:
         unfiltered_link_list = perform_google_search(item_name, 100)
@@ -34,26 +37,36 @@ def main():
             return
         with open('printout_data/competitor_links.txt', 'w') as file:
             for link in competitor_link_list:
-                file.write(f'{link}\n')
+                file.write(f'{link}')
     else:
         with open('printout_data/competitor_links.txt', 'r') as file:
-            competitor_link_list = file.readlines()
+            competitor_link_list = [line.strip() for line in file.readlines() if line.strip()]
 
     if not skip_extract_price:
         price_dict = asyncio.run(extract_price(competitor_link_list))
         if not price_dict:
             print('No prices found')
-            with open('printout_data/prices.txt', 'w') as file:
-                file.write('No prices found')
+            with open('printout_data/prices.json', 'w') as file:
+                json.dump({'error': 'No prices found'}, file, indent=4)
             return
-        with open('printout_data/prices.txt', 'w') as file:
-            for key, value in price_dict.items():
-                file.write(f'{key} {value}\n')
+        with open('printout_data/prices.json', 'w') as file:
+            json.dump(price_dict, file, indent=4)
     else:
-        with open('printout_data/prices.txt', 'r') as file:
-            price_dict = file.readlines()
-
-
+        with open('printout_data/prices.json', 'r') as file:
+            price_dict = json.load(file)
+    
+    if not skip_remove_outliers:
+        filtered_price_dict = remove_outliers(price_dict)
+        if not filtered_price_dict:
+            print('No prices found')
+            with open('printout_data/filtered_prices.txt', 'w') as file:
+                json.dump({'error': 'No prices found'}, file, indent=4)
+            return
+        with open('printout_data/filtered_prices.json', 'w') as file:
+            json.dump(filtered_price_dict, file, indent=4)
+    else:
+        with open('printout_data/filtered_prices.json', 'r') as file:
+            filtered_price_dict = json.load(file)
     
     
 

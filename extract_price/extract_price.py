@@ -10,7 +10,7 @@ async def extract_price(url_list):
         price_dict = {}
         for url in url_list:
             try:
-                await page.goto(url)
+                await page.goto(url, timeout=6000)
                 # Check if "This site can't be reached" is present in the page content
                 if "This site can't be reached" in await page.content():
                     print(f"Site can't be reached: {url}")

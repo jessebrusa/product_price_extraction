@@ -1,5 +1,4 @@
 from urllib.parse import urlparse
-import requests
 import os
 import time
 from playwright.sync_api import sync_playwright
@@ -98,3 +97,4 @@ def perform_google_search(item_name, num_results=100):
         browser.close()
 
     return urls
+
