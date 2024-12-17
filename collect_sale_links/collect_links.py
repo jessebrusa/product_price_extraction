@@ -33,7 +33,6 @@ def filter_links(url_list, item_name):
                 filtered_url_list.append(url)
     else:
         filtered_url_list = url_list
-
     if filtered_url_list:
         filtered_url_list = get_best_matches(item_name, filtered_url_list)
     else:

@@ -1,8 +1,9 @@
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 import os
 import time
 from playwright.sync_api import sync_playwright
 import requests
+from bs4 import BeautifulSoup
 
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')   
 GOOGLE_CSE_ID = os.environ.get('GOOGLE_CSE_ID')
@@ -18,20 +19,23 @@ def extract_domain(url):
         parts = parts[1:]
     return '.'.join(parts) if domain else None
 
-GOOGLE_API = False
-def perform_google_search(item_name, num_results=100, headless=False):
+
+def perform_google_search(item_name, num_results=100, headless=False, GOOGLE_API=False):
     urls = None
     if GOOGLE_API:
         urls = perform_google_search_api(item_name, num_results)
+    elif bs4:
+        urls = perform_google_search_bs(item_name, num_results)
     else:
         urls = perform_google_search_playwright(item_name, num_results, headless)
 
     return urls
 
+
 def perform_google_search_api(item_name, num_results=100):
     api_key = GOOGLE_API_KEY
     cse_id = GOOGLE_CSE_ID 
-    query = f'shop {item_name}'
+    query = quote(f'shop {item_name}')
     urls = []
 
     # Get the directory of the current script
@@ -40,6 +44,7 @@ def perform_google_search_api(item_name, num_results=100):
 
     for start in range(1, num_results + 1, 10): 
         url = f'https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={cse_id}&start={start}'
+        print(f"Request URL: {url}")  # Print the request URL for debugging
         response = requests.get(url)
         
         if response.status_code != 200:
@@ -66,6 +71,7 @@ def perform_google_search_api(item_name, num_results=100):
                 urls.append(link)
 
     return urls
+
 
 def perform_google_search_playwright(item_name, num_results=100, headless=False):
     urls = []
