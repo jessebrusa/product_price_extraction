@@ -3,28 +3,31 @@ from collect_sale_links.collect_links import perform_google_search, filter_links
 from extract_price.extract_price import extract_price 
 from remove_outliers.remove_outliers import remove_outliers
 import json
+import logging
 
 
-# item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
+item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
 # item_name = 'Armasight BNVD-51 Gen 3 Pinnacle Night Vision Goggle'
 # item_name = 'BOSS StrongBox 7126-7640 - Pull Out Drawer'
 # item_name = 'Renogy 1.2kW Essential Kit'
 # item_name = 'ATN BinoX 4T 384 1.25-5x Thermal Binoculars'
 # item_name = 'Tuffy Security Products Underseat Drawer w/ Keyed Lock for Ford Explorer & Police Interceptor, 2011-2024, Black'
 # item_name = 'PETLIBRO Dog Water Fountain, 2.1Gal/8L Capsule Dog Fountain for Medium to Large Dogs, Anti-Splash Dog Water Bowl Dispenser, Ultra-Quiet Pet Water Fountain Easy to Clean'
-# item_name = 'iphone 15 pro max'
-# item_name = 'Action Target 1" Orange Self-Adhesive Target Spots (10 Sheets)'
-# item_name = 'Athlon Optics Midas EDC 3 MOA Red Dot Sight'
-item_name = 'Anker SOLIX C800X Solar Generator + 100W Solar Panel'
 
-skip_unfiltered = True
+
+skip_unfiltered = False
 skip_competitor = True
-skip_extract_price = False
-skip_remove_outliers = False
+skip_extract_price = True
+skip_remove_outliers = True
 def main():
+    logger.info(f'Collecting links for "{item_name}"')
     if not skip_unfiltered:
-        unfiltered_link_list = perform_google_search(item_name, 100, bs4=True)
-        print(unfiltered_link_list)
+        unfiltered_link_list = perform_google_search(item_name, 100, headless=True)
         if not unfiltered_link_list:
             print(f'No search results found for "{item_name}"')
             return
@@ -42,7 +45,7 @@ def main():
             return
         with open('printout_data/competitor_links.txt', 'w') as file:
             for link in competitor_link_list:
-                file.write(f'{link}\n')
+                file.write(f'{link}')
     else:
         with open('printout_data/competitor_links.txt', 'r') as file:
             competitor_link_list = [line.strip() for line in file.readlines()]

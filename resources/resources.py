@@ -3,12 +3,16 @@ import os
 import time
 from playwright.sync_api import sync_playwright
 import requests
-from bs4 import BeautifulSoup
+import logging
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')   
 GOOGLE_CSE_ID = os.environ.get('GOOGLE_CSE_ID')
-# print(GOOGLE_API_KEY)
-# print(GOOGLE_CSE_ID)
 
 
 def extract_domain(url):
@@ -24,8 +28,6 @@ def perform_google_search(item_name, num_results=100, headless=False, GOOGLE_API
     urls = None
     if GOOGLE_API:
         urls = perform_google_search_api(item_name, num_results)
-    elif bs4:
-        urls = perform_google_search_bs(item_name, num_results)
     else:
         urls = perform_google_search_playwright(item_name, num_results, headless)
 
@@ -33,6 +35,10 @@ def perform_google_search(item_name, num_results=100, headless=False, GOOGLE_API
 
 
 def perform_google_search_api(item_name, num_results=100):
+    if not GOOGLE_API_KEY or not GOOGLE_CSE_ID:
+        logger.warning(f'GOOGLE_API_KEY: {GOOGLE_API_KEY}')
+        logger.warning(f'GOOGLE_CSE_ID: {GOOGLE_CSE_ID}')
+
     api_key = GOOGLE_API_KEY
     cse_id = GOOGLE_CSE_ID 
     query = quote(f'shop {item_name}')
@@ -88,16 +94,19 @@ def perform_google_search_playwright(item_name, num_results=100, headless=False)
         exclude_list = []
 
     with sync_playwright() as p:
+        logger.info('Launching browser')
         browser = p.chromium.launch(headless=headless)
         page = browser.new_page()
         query = f'shop {item_name}'
         search_url = f'https://www.google.com/search?q={query}'
 
+        logger.info(f'Performing search for "{query}"')
         page.goto(search_url)
 
-        for _ in range(num_results // 10):
+        for i in range(num_results // 10):
             try:
                 page.wait_for_selector('div#search a', state='attached', timeout=10000)
+                logger.info(f'Search results loaded for page {i+1}')
                 links = page.query_selector_all('div#search a')
                 for link in links:
                     href = link.get_attribute('href')
@@ -105,14 +114,22 @@ def perform_google_search_playwright(item_name, num_results=100, headless=False)
                         urls.append(href)
                 next_button = page.query_selector('a#pnnext')
                 if next_button:
+                    logger.info('Clicking next button')
                     next_button.click()
-                    time.sleep(2)  # Wait for the next page to load
+                    time.sleep(1) 
                 else:
                     break
             except Exception as e:
-                print(f"Error during search: {e}")
+                logger.error(f'Error: {e}')
                 break
 
         browser.close()
+
+        if not urls:
+            logger.warning(f"No search results found for \"{item_name}\"")
+        else:
+            logger.info(f"Found {len(urls)} URLs for \"{item_name}\"")
+            logger.debug(f"URLs: {urls}")
+
 
     return urls

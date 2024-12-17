@@ -17,17 +17,6 @@ def fetch_webpage(url, headers=None, timeout=10, retries=3, backoff_factor=0.3):
         print(f"Error: Failed to fetch URL: {url} - {e}")
         return None
 
-# Example usage
-url = 'https://example.com'
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-}
-soup = fetch_webpage(url, headers=headers)
-if soup:
-    print(soup.prettify())
-else:
-    print("Failed to fetch the webpage.")
-
 
 def has_msrp_around(element):
         text = element.get_text()
