@@ -19,33 +19,45 @@ def sanitize_data(data):
         sanitized_data[sanitized_key] = sanitized_value
     return sanitized_data
 
-def export_prices(item_name, price_dict, file_path, excel=True, json=True, html=True):  
+def sanitize_filename(filename):
+    return "".join(c for c in filename if c.isalnum() or c in (' ', '.', '_')).rstrip()
+
+def export_prices(item_name, price_dict, base_path, excel=True, json=True, html=True):  
     sanitized_price_dict = sanitize_data(price_dict)
+    sanitized_item_name = sanitize_filename(item_name)[:50]  # Truncate to avoid long file path issues
 
     data = {'URL': list(sanitized_price_dict.keys()), 'Price': list(sanitized_price_dict.values())}
     df = pd.DataFrame(data)
 
-    logger.info(f'Exporting prices to {file_path}')
+    # Create a folder with the sanitized item name
+    folder_path = os.path.join(base_path, sanitized_item_name)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    logger.info(f'Exporting prices to {folder_path}')
     logger.debug(f'Prices: {df}')
 
     # Truncate the sheet name to 31 characters if necessary
-    sheet_name = item_name[:31]
+    sheet_name = sanitized_item_name[:31]
 
     if excel:
         try:
-            df.to_excel(f'{file_path}.xlsx', index=False, sheet_name=sheet_name)
+            df.to_excel(os.path.join(folder_path, f'{sheet_name}.xlsx'), index=False, sheet_name=sheet_name)
+            logger.info('Exported to Excel')
         except Exception as e:
             logger.error(f"Error exporting to Excel: {e}")
 
     if json:
         try:
-            df.to_json(f'{file_path}.json', orient='records', indent=4)
+            df.to_json(os.path.join(folder_path, f'{sheet_name}.json'), orient='records', indent=4)
+            logger.info('Exported to JSON')
         except Exception as e:
             logger.error(f"Error exporting to JSON: {e}")
 
     if html:
         try:
-            write_html(item_name, price_dict, f'{file_path}.html')
+            write_html(item_name, price_dict, os.path.join(folder_path, f'{sheet_name}.html'))
+            logger.info('Exported to HTML')
         except Exception as e:
             logger.error(f"Error exporting to HTML: {e}")
 

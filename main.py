@@ -2,9 +2,10 @@ import asyncio
 from collect_sale_links.collect_links import perform_google_search, filter_links
 from extract_price.extract_price import extract_price 
 from remove_outliers.remove_outliers import remove_outliers
-from export.export import export_prices
+from export.export import export_prices, sanitize_filename
 import json
 import logging
+import os
 
 
 # Configure logging
@@ -12,21 +13,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
-item_name = 'Armasight BNVD-51 Gen 3 Pinnacle Night Vision Goggle'
-item_name = 'BOSS StrongBox 7126-7640 - Pull Out Drawer'
-item_name = 'Renogy 1.2kW Essential Kit'
-item_name = 'ATN BinoX 4T 384 1.25-5x Thermal Binoculars'
-item_name = 'Tuffy Security Products Underseat Drawer w/ Keyed Lock for Ford Explorer & Police Interceptor, 2011-2024, Black'
-# item_name = 'PETLIBRO Dog Water Fountain, 2.1Gal/8L Capsule Dog Fountain for Medium to Large Dogs, Anti-Splash Dog Water Bowl Dispenser, Ultra-Quiet Pet Water Fountain Easy to Clean'
-
-
-skip_unfiltered = True
-skip_competitor = True
-skip_extract_price = True
-skip_remove_outliers = True
+skip_unfiltered = False
+skip_competitor = False
+skip_extract_price = False
+skip_remove_outliers = False
 skip_export = False
-def main():
+def main(item_name):
     if not skip_unfiltered:
         logger.info(f'Collecting links for "{item_name}"')
         unfiltered_link_list = perform_google_search(item_name, 100, headless=True)
@@ -39,6 +31,7 @@ def main():
     else:
         with open('printout_data/unfiltered_links.txt', 'r') as file:
             unfiltered_link_list = [line.strip() for line in file.readlines()]
+            logger.info(f"Found {len(unfiltered_link_list)} URLs for \"{item_name}\"")
 
     if not skip_competitor:
         logger.info(f'Filtering links for "{item_name}"')
@@ -52,6 +45,7 @@ def main():
     else:
         with open('printout_data/competitor_links.txt', 'r') as file:
             competitor_link_list = [line.strip() for line in file.readlines()]
+        logger.info(f'Found {len(competitor_link_list)} competitors')
 
     if not skip_extract_price:
         logger.info(f'Extracting prices for "{item_name}"')
@@ -66,6 +60,7 @@ def main():
     else:
         with open('printout_data/prices.json', 'r') as file:
             price_dict = json.load(file)
+        logger.info(f'Prices extracted: {len(price_dict)}')
     
     if not skip_remove_outliers:
         filtered_price_dict = remove_outliers(price_dict)
@@ -79,13 +74,19 @@ def main():
     else:
         with open('printout_data/filtered_prices.json', 'r') as file:
             filtered_price_dict = json.load(file)
+        logger.info(f"Final filtered prices: {len(filtered_price_dict)}")
     
     if not skip_export:
-        export_prices(item_name, filtered_price_dict, f'./export/export_files/{item_name}')
-    
-        
-
+        export_dir = './export/export_files'
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+        sanitized_item_name = sanitize_filename(item_name)
+        export_prices(sanitized_item_name, filtered_price_dict, export_dir)
 
 
 if __name__ == "__main__":
-    main()
+    with open('collect_competitors/product_list.txt', 'r') as file:
+        item_list = [line.strip() for line in file.readlines()] 
+    if item_list:
+        for item_name in item_list:
+            main(item_name)

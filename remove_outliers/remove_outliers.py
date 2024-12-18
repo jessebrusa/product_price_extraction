@@ -25,8 +25,8 @@ def remove_outliers(prices_dict):
 
     reference_price = prices[position]
 
-    upper_bound = reference_price * 1.5
-    lower_bound = median * 0.5
+    upper_bound = reference_price * 2
+    lower_bound = median * 0.25
 
     logger.debug(f"Median: {median}")
     logger.debug(f"Reference price: {reference_price}")
