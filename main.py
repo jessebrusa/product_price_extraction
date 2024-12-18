@@ -90,3 +90,4 @@ if __name__ == "__main__":
     if item_list:
         for item_name in item_list:
             main(item_name)
+            print()

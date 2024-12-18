@@ -91,18 +91,23 @@ def extract_price(element):
             return True
         return False
 
-    # First, try to find the price within the <ins> tag inside <p class="price">
-    price_element = element.find('p', class_='price')
-    if price_element:
-        ins_element = price_element.find('ins')
-        if ins_element:
-            text = ins_element.get_text()
-            match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
-            if match:
-                return match.group()
+    # Check for price in data-price attribute
+    price_elements = element.find_all(attrs={"data-price": True})
+    for price_element in price_elements:
+        price = price_element["data-price"]
+        if price:
+            return price
 
     # Check for WooCommerce price elements
     price_elements = element.find_all('span', class_='woocommerce-Price-amount')
+    for price_element in price_elements:
+        text = price_element.get_text()
+        match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)
+        if match:
+            return match.group()
+
+    # Check for price in span elements with class 'price hot'
+    price_elements = element.find_all('span', class_='price hot')
     for price_element in price_elements:
         text = price_element.get_text()
         match = re.search(r'\$\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})?', text)

@@ -24,13 +24,12 @@ def sanitize_filename(filename):
 
 def export_prices(item_name, price_dict, base_path, excel=True, json=True, html=True):  
     sanitized_price_dict = sanitize_data(price_dict)
-    sanitized_item_name = sanitize_filename(item_name)[:50]  # Truncate to avoid long file path issues
-
+    sanitized_item_name = sanitize_filename(item_name)
     data = {'URL': list(sanitized_price_dict.keys()), 'Price': list(sanitized_price_dict.values())}
     df = pd.DataFrame(data)
 
     # Create a folder with the sanitized item name
-    folder_path = os.path.join(base_path, sanitized_item_name)
+    folder_path = os.path.join(base_path, sanitized_item_name).replace('\\', '/')
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
