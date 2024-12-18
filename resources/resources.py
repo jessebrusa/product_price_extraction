@@ -50,7 +50,7 @@ def perform_google_search_api(item_name, num_results=100):
 
     for start in range(1, num_results + 1, 10): 
         url = f'https://www.googleapis.com/customsearch/v1?q={query}&key={api_key}&cx={cse_id}&start={start}'
-        print(f"Request URL: {url}")  # Print the request URL for debugging
+        logger.info(f'Performing search for "{item_name}"')
         response = requests.get(url)
         
         if response.status_code != 200:
@@ -94,7 +94,7 @@ def perform_google_search_playwright(item_name, num_results=100, headless=False)
         exclude_list = []
 
     with sync_playwright() as p:
-        logger.info('Launching browser')
+        logger.debug('Launching browser')
         browser = p.chromium.launch(headless=headless)
         page = browser.new_page()
         query = f'shop {item_name}'
@@ -114,9 +114,8 @@ def perform_google_search_playwright(item_name, num_results=100, headless=False)
                         urls.append(href)
                 next_button = page.query_selector('a#pnnext')
                 if next_button:
-                    logger.info('Clicking next button')
+                    logger.debug('Clicking next button')
                     next_button.click()
-                    time.sleep(1) 
                 else:
                     break
             except Exception as e:

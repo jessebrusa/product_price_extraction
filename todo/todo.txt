@@ -1,1 +1,1 @@
-eliminate if list in text
+write out data to excel

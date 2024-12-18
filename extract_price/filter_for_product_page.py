@@ -1,7 +1,7 @@
 from playwright.async_api import Page
 
 async def filter_out_category(page: Page) -> bool:
-    categories = ['best sellers', 'low to high', 'high to low']
+    categories = ['best sellers', 'low to high', 'high to low', 'sort by']
     content = await page.content()
     for category in categories:
         if category in content:

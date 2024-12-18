@@ -1,4 +1,4 @@
-from googlesearch import search
+import logging
 import os
 import sys
 
@@ -10,6 +10,11 @@ from resources.resources import perform_google_search, extract_domain
 from difflib import SequenceMatcher
 from collections import defaultdict
 from urllib.parse import urlparse
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 default_num_results = 100
@@ -37,6 +42,9 @@ def filter_links(url_list, item_name):
         filtered_url_list = get_best_matches(item_name, filtered_url_list)
     else:
         print('No URLs found in competitors list.')
+
+    if filtered_url_list:
+        logger.info(f'Found {len(filtered_url_list)} competitors')
 
     return filtered_url_list
 

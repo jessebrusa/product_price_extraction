@@ -2,19 +2,24 @@ from playwright.async_api import async_playwright, Page
 from bs4 import BeautifulSoup, NavigableString
 import re
 import requests
+import logging
 
 
-def fetch_webpage(url, headers=None, timeout=10, retries=3, backoff_factor=0.3):
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
+def fetch_webpage(url, headers=None, timeout=10):
     try:
         response = requests.get(url, headers=headers, timeout=timeout)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
             return soup
         else:
-            print(f"Error: Received status code {response.status_code} for URL: {url}")
+            logger.debug(f"Error: Received status code {response.status_code}")
             return None
     except requests.RequestException as e:
-        print(f"Error: Failed to fetch URL: {url} - {e}")
+        logger.debug(f"Error: {e}")
         return None
 
 
@@ -51,8 +56,8 @@ async def find_add_to_cart(page: Page):
     
     # Check if "discontinued" is present in the page content
     if soup.find(string=lambda text: isinstance(text, NavigableString) and "discontinued" in text.lower()):
-        print("Product is discontinued")
-        print(page.url)
+        logger.debug("Discontinued product")
+        logger.debug(page.url)
         return None
     
     # Find the first element containing "Add to Cart" or "Sold out" text
@@ -60,30 +65,26 @@ async def find_add_to_cart(page: Page):
     
     if element:
         if "sold out" in element.lower():
-            print(f"Found element with text: {element}")
-            print(page.url)
-            print(element.parent)
-            print()
+            logger.debug(page.url)
+            logger.debug(element)
         return element.parent
     else:
         # If not found by text, search for input elements with value attribute
         element = soup.find("input", {"value": lambda value: value and "add to cart" in value.lower()})
         if element:
-            print(f"Found input element with value: {element}")
             return element.parent
         else:
             # Search for button elements with "Add To Cart" or "Sold out" text
             element = soup.find("button", string=lambda text: isinstance(text, NavigableString) and ("add to cart" in text.lower() or "sold out" in text.lower()))
             if element:
                 if "sold out" in element.lower():
-                    print(f"Found button element with text: {element}")
-                    print(page.url)
+                    logger.debug(f"Found element with text 'sold out': {element}")
                 return element
             else:
                 # Search for span elements with "Add To Cart" text within buttons
                 element = soup.find("button span", string=lambda text: isinstance(text, NavigableString) and "add to cart" in text.lower())
                 if element:
-                    print(f"Found span element with text: {element}")
+                    logger.debug(f"Found element with text 'Add to Cart': {element}")
                     return element.parent
                 else:
                     return None
@@ -148,39 +149,31 @@ async def target_price(page: Page):
     # Step 1: Find the "Add to Cart" or "Sold Out" button
     add_to_cart_element = await find_add_to_cart(page)
     if not add_to_cart_element:
-        print("Add to cart element not found")
-        print(page.url)
-        print()
+        logger.debug("Add to Cart element not found")
+        logger.debug(page.url)
         return None
-    
-    # print()
-    # print(page.url)
-    # print(add_to_cart_element)
-    # print()
 
     # Step 2: Find the price element
     price_element = find_price_element(add_to_cart_element)
     if not price_element:
-        print("Price element not found")
-        print(page.url)
-        print()
+        logger.debug("Price element not found")
+        logger.debug(page.url)
         return None
     
-    # print()
-    # print(page.url)
-    # print(price_element)
-    # print()
     
     # Step 3: Extract the price
     price = extract_price(price_element)
     if not price:
-        print("Price not found")
-        print(page.url)
-        print()
+        logger.debug("Price not found")
+        logger.debug(page.url)
         return None
 
     # Step 4: Clean the extracted price
     cleaned_price = clean_price(price)
+    if not cleaned_price:
+        logger.debug("Price could not be cleaned")
+        logger.debug(page.url)
+        return None
 
 
     return cleaned_price

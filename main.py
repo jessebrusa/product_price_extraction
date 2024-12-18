@@ -21,12 +21,12 @@ item_name = 'Armasight Collector 320 1.5-6x19 Compact Thermal Weapon Sight'
 
 
 skip_unfiltered = False
-skip_competitor = True
-skip_extract_price = True
-skip_remove_outliers = True
+skip_competitor = False
+skip_extract_price = False
+skip_remove_outliers = False
 def main():
-    logger.info(f'Collecting links for "{item_name}"')
     if not skip_unfiltered:
+        logger.info(f'Collecting links for "{item_name}"')
         unfiltered_link_list = perform_google_search(item_name, 100, headless=True)
         if not unfiltered_link_list:
             print(f'No search results found for "{item_name}"')
@@ -39,18 +39,20 @@ def main():
             unfiltered_link_list = [line.strip() for line in file.readlines()]
 
     if not skip_competitor:
+        logger.info(f'Filtering links for "{item_name}"')
         competitor_link_list = filter_links(unfiltered_link_list, item_name)
         if not competitor_link_list:
             print('No competitors found')
             return
         with open('printout_data/competitor_links.txt', 'w') as file:
             for link in competitor_link_list:
-                file.write(f'{link}')
+                file.write(f'{link}\n')
     else:
         with open('printout_data/competitor_links.txt', 'r') as file:
             competitor_link_list = [line.strip() for line in file.readlines()]
 
     if not skip_extract_price:
+        logger.info(f'Extracting prices for "{item_name}"')
         price_dict = asyncio.run(extract_price(competitor_link_list))
         if not price_dict:
             print('No prices found')
