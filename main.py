@@ -89,5 +89,9 @@ if __name__ == "__main__":
         item_list = [line.strip() for line in file.readlines()] 
     if item_list:
         for item_name in item_list:
-            main(item_name)
-            print()
+            try:
+                print(f'Processing "{item_name}"')
+                main(item_name)
+                print()
+            except Exception as e:
+                print(f'Error processing "{item_name}": {e}')

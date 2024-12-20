@@ -17,10 +17,10 @@ async def extract_price(url_list):
         price_dict = {}
         for url in url_list:
             logger.info(f'{url_list.index(url) + 1}/{len(url_list)} Extracting price from {url}')
-            page_content = fetch_webpage(url, timeout=10)
-            if not page_content: 
-                logger.debug('Error: Failed to fetch page content')
-                continue
+            # page_content = fetch_webpage(url, timeout=10)
+            # if not page_content: 
+            #     logger.debug('Error: Failed to fetch page content')
+            #     continue
 
             try:
                 await page.goto(url, timeout=6000)
