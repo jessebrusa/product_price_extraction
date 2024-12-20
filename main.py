@@ -13,15 +13,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-skip_unfiltered = False
-skip_competitor = False
+skip_unfiltered = True
+skip_competitor = True
 skip_extract_price = False
 skip_remove_outliers = False
 skip_export = False
 def main(item_name):
     if not skip_unfiltered:
         logger.info(f'Collecting links for "{item_name}"')
-        unfiltered_link_list = perform_google_search(item_name, 100, headless=True)
+        unfiltered_link_list = perform_google_search(item_name, 100, headless=False)
         if not unfiltered_link_list:
             print(f'No search results found for "{item_name}"')
             return
@@ -85,13 +85,16 @@ def main(item_name):
 
 
 if __name__ == "__main__":
-    with open('collect_competitors/product_list.txt', 'r') as file:
-        item_list = [line.strip() for line in file.readlines()] 
-    if item_list:
-        for item_name in item_list:
-            try:
-                print(f'Processing "{item_name}"')
-                main(item_name)
-                print()
-            except Exception as e:
-                print(f'Error processing "{item_name}": {e}')
+    # with open('collect_competitors/product_list.txt', 'r') as file:
+    #     item_list = [line.strip() for line in file.readlines()] 
+    # if item_list:
+    #     for item_name in item_list:
+    #         try:
+    #             print(f'Processing "{item_name}"')
+    #             main(item_name)
+    #             print()
+    #         except Exception as e:
+    #             print(f'Error processing "{item_name}": {e}')
+
+    item_name = 'ATN BlazeSeeker 210 Thermal Monocular'
+    main(item_name)
