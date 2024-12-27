@@ -1,11 +1,11 @@
 import os
 import sys
+import pandas as pd
+import logging
 
 # Add the main directory to the PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from export.write_html import write_html
-import pandas as pd
-import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(asctime)s - %(message)s')
@@ -25,7 +25,11 @@ def sanitize_filename(filename):
 def export_prices(item_name, price_dict, base_path, excel=True, json=True, html=True):  
     sanitized_price_dict = sanitize_data(price_dict)
     sanitized_item_name = sanitize_filename(item_name)
-    data = {'URL': list(sanitized_price_dict.keys()), 'Price': list(sanitized_price_dict.values())}
+
+    # Convert prices to floats and sort the price_dict by price (value) from low to high
+    sorted_price_dict = {k: float(v) for k, v in sorted(sanitized_price_dict.items(), key=lambda item: float(item[1]))}
+
+    data = {'URL': list(sorted_price_dict.keys()), 'Price': list(sorted_price_dict.values())}
     df = pd.DataFrame(data)
 
     # Create a folder with the sanitized item name
@@ -55,7 +59,7 @@ def export_prices(item_name, price_dict, base_path, excel=True, json=True, html=
 
     if html:
         try:
-            write_html(item_name, price_dict, os.path.join(folder_path, f'{sheet_name}.html'))
+            write_html(item_name, sorted_price_dict, os.path.join(folder_path, f'{sheet_name}.html'))
             logger.info('Exported to HTML')
         except Exception as e:
             logger.error(f"Error exporting to HTML: {e}")

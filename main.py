@@ -1,7 +1,7 @@
-import asyncio
-from collect_sale_links.collect_links import perform_google_search, filter_links
-from extract_price.extract_price import extract_price 
-from remove_outliers.remove_outliers import remove_outliers
+# import asyncio
+# from collect_sale_links.collect_links import perform_google_search, filter_links
+# from extract_price.extract_price import extract_price 
+# from remove_outliers.remove_outliers import remove_outliers
 from export.export import export_prices, sanitize_filename
 import json
 import logging
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 skip_unfiltered = True
 skip_competitor = True
-skip_extract_price = False
-skip_remove_outliers = False
+skip_extract_price = True
+skip_remove_outliers = True
 skip_export = False
 def main(item_name):
     if not skip_unfiltered:
@@ -96,5 +96,5 @@ if __name__ == "__main__":
     #         except Exception as e:
     #             print(f'Error processing "{item_name}": {e}')
 
-    item_name = 'ATN BlazeSeeker 210 Thermal Monocular'
+    item_name = 'StudioLive® Series III 32SC Digital Console Mixer'
     main(item_name)
